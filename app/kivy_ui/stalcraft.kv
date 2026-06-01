@@ -1,0 +1,407 @@
+#:kivy 2.0
+#:import get_color_from_hex kivy.utils.get_color_from_hex
+#:import dp kivy.metrics.dp
+
+<ArtifactCard>:
+    size_hint_y: None
+    height: dp(180)
+    orientation: 'vertical'
+    spacing: dp(2)
+    canvas.before:
+        Color:
+            rgba: self.bg_color if self.bg_color else (0.05, 0.09, 0.15, 1)
+        RoundedRectangle:
+            pos: self.pos
+            size: self.size
+            radius: [8, 8, 8, 8]
+        Color:
+            rgba: (0.1, 0.23, 0.36, 1)
+        Line:
+            rounded_rectangle: self.pos[0], self.pos[1], self.size[0], self.size[1], 8
+            width: 0.8
+
+    BoxLayout:
+        orientation: 'vertical'
+        padding: dp(4)
+        spacing: dp(2)
+
+        AnchorLayout:
+            anchor_x: 'center'
+            anchor_y: 'center'
+            size_hint_y: 0.6
+            AsyncImage:
+                id: card_icon
+                source: root.icon_source if root.icon_source else ''
+                size_hint: None, None
+                size: dp(44), dp(44)
+                mipmap: True
+
+        Label:
+            id: card_name
+            text: root.name
+            font_size: '9sp'
+            bold: True
+            halign: 'center'
+            valign: 'middle'
+            size_hint_y: 0.25
+            text_size: self.width - dp(8), None
+            height: self.texture_size[1]
+            color: (0.83, 0.92, 1, 1)
+            shorten: True
+            shorten_from: 'right'
+
+        Label:
+            id: card_rarity
+            text: root.rarity_name
+            font_size: '7sp'
+            bold: True
+            halign: 'center'
+            valign: 'middle'
+            size_hint_y: 0.15
+            color: root.rarity_color if root.rarity_color else (0.35, 0.48, 0.6, 1)
+
+
+<StatusBar>:
+    size_hint_y: None
+    height: dp(24)
+    canvas.before:
+        Color:
+            rgba: (0.05, 0.08, 0.12, 1)
+        Rectangle:
+            pos: self.pos
+            size: self.size
+    Label:
+        id: status_label
+        text: root.text
+        font_size: '9sp'
+        color: (0.35, 0.48, 0.6, 1)
+        halign: 'left'
+        valign: 'middle'
+        text_size: self.width - dp(10), None
+        shorten: True
+
+
+<CatalogScreen>:
+    name: 'catalog'
+    BoxLayout:
+        orientation: 'vertical'
+        spacing: dp(2)
+        padding: dp(4)
+
+        BoxLayout:
+            size_hint_y: None
+            height: dp(48)
+            spacing: dp(4)
+
+            TextInput:
+                id: search_input
+                hint_text: '\U0001f50d Поиск...'
+                size_hint_x: 0.7
+                font_size: '12sp'
+                multiline: False
+                background_color: (0.08, 0.13, 0.22, 1)
+                foreground_color: (0.83, 0.92, 1, 1)
+                cursor_color: (0, 0.9, 1, 1)
+                hint_text_color: (0.35, 0.48, 0.6, 1)
+                padding: dp(8), dp(4)
+                on_text: root.on_search(self.text)
+
+            Button:
+                text: '\u2716'
+                size_hint_x: 0.15
+                font_size: '12sp'
+                background_color: (0.07, 0.13, 0.22, 1)
+                color: (0.35, 0.48, 0.6, 1)
+                on_release: search_input.text = ''
+
+            ToggleButton:
+                id: select_toggle
+                text: '\u2713 \u2713'
+                size_hint_x: 0.15
+                font_size: '10sp'
+                background_color: (0.07, 0.13, 0.22, 1)
+                color: (0.35, 0.48, 0.6, 1)
+                on_press: root.toggle_all()
+
+        ScrollView:
+            GridLayout:
+                id: catalog_grid
+                cols: 2
+                spacing: dp(4)
+                size_hint_y: None
+                height: self.minimum_height
+
+
+<MonitorScreen>:
+    name: 'monitor'
+    BoxLayout:
+        orientation: 'vertical'
+        spacing: dp(2)
+        padding: dp(4)
+
+        BoxLayout:
+            size_hint_y: None
+            height: dp(60)
+            spacing: dp(2)
+            padding: dp(2)
+            Label:
+                text: '\u2726'
+                font_size: '12sp'
+                size_hint_x: 0.1
+                color: (0.35, 0.48, 0.6, 1)
+            GridLayout:
+                id: rarity_grid
+                cols: 3
+                spacing: dp(2)
+                size_hint_x: 0.9
+
+        BoxLayout:
+            size_hint_y: None
+            height: dp(28)
+            spacing: dp(4)
+            Label:
+                text: '+:'
+                font_size: '10sp'
+                size_hint_x: 0.08
+                color: (0.35, 0.48, 0.6, 1)
+            TextInput:
+                id: min_ptn_input
+                text: '0'
+                font_size: '11sp'
+                size_hint_x: 0.12
+                multiline: False
+                input_filter: 'int'
+                background_color: (0.08, 0.13, 0.22, 1)
+                foreground_color: (0.83, 0.92, 1, 1)
+            Label:
+                text: '\u0421\u043A\u0438\u0434\u043A\u0430:'
+                font_size: '10sp'
+                size_hint_x: 0.17
+                color: (0.35, 0.48, 0.6, 1)
+            TextInput:
+                id: profit_input
+                text: '20'
+                font_size: '11sp'
+                size_hint_x: 0.12
+                multiline: False
+                input_filter: 'int'
+                background_color: (0.08, 0.13, 0.22, 1)
+                foreground_color: (0.83, 0.92, 1, 1)
+            Label:
+                text: '%'
+                font_size: '10sp'
+                size_hint_x: 0.04
+                color: (0.35, 0.48, 0.6, 1)
+            Label:
+                text: '\u0414\u043D\u0438:'
+                font_size: '10sp'
+                size_hint_x: 0.08
+                color: (0.35, 0.48, 0.6, 1)
+            TextInput:
+                id: days_input
+                text: '14'
+                font_size: '11sp'
+                size_hint_x: 0.12
+                multiline: False
+                input_filter: 'int'
+                background_color: (0.08, 0.13, 0.22, 1)
+                foreground_color: (0.83, 0.92, 1, 1)
+
+        BoxLayout:
+            size_hint_y: None
+            height: dp(44)
+            spacing: dp(4)
+            padding: dp(4)
+
+            Button:
+                id: start_stop_btn
+                text: root.btn_text
+                font_size: '14sp'
+                bold: True
+                background_color: root.btn_color
+                color: (1, 1, 1, 1)
+                on_release: root.toggle_monitoring()
+
+        BoxLayout:
+            size_hint_y: None
+            height: dp(24)
+            Label:
+                id: monitor_status_label
+                text: '\u041C\u043E\u043D\u0438\u0442\u043E\u0440\u0438\u043D\u0433 \u043D\u0435 \u0437\u0430\u043F\u0443\u0449\u0435\u043D'
+                font_size: '10sp'
+                color: (0.35, 0.48, 0.6, 1)
+
+        ScrollView:
+            GridLayout:
+                id: monitor_results
+                cols: 1
+                spacing: dp(1)
+                size_hint_y: None
+                height: self.minimum_height
+
+
+<SettingsScreen>:
+    name: 'settings'
+    BoxLayout:
+        orientation: 'vertical'
+        spacing: dp(4)
+        padding: dp(16)
+
+        BoxLayout:
+            size_hint_y: None
+            height: dp(50)
+            Label:
+                text: '\u2699 \u041D\u0430\u0441\u0442\u0440\u043E\u0439\u043A\u0438'
+                font_size: '18sp'
+                bold: True
+                color: (0, 0.9, 1, 1)
+                halign: 'center'
+                valign: 'middle'
+
+        Label:
+            size_hint_y: None
+            height: dp(24)
+            text: 'Telegram Chat ID:'
+            font_size: '11sp'
+            color: (0.83, 0.92, 1, 1)
+            halign: 'left'
+            valign: 'middle'
+
+        TextInput:
+            id: telegram_id_input
+            size_hint_y: None
+            height: dp(44)
+            font_size: '12sp'
+            multiline: False
+            background_color: (0.08, 0.13, 0.22, 1)
+            foreground_color: (0.83, 0.92, 1, 1)
+            cursor_color: (0, 0.9, 1, 1)
+            hint_text_color: (0.35, 0.48, 0.6, 1)
+            hint_text: 'ID чата Telegram'
+            padding: dp(8), dp(4)
+
+        Label:
+            size_hint_y: None
+            height: dp(24)
+            text: '\u0421\u0435\u0440\u0432\u0435\u0440:'
+            font_size: '11sp'
+            color: (0.83, 0.92, 1, 1)
+            halign: 'left'
+            valign: 'middle'
+
+        Spinner:
+            id: server_spinner
+            size_hint_y: None
+            height: dp(44)
+            text: 'ru'
+            values: ['ru', 'eu', 'na', 'sea', 'nea']
+            font_size: '12sp'
+            background_color: (0.08, 0.13, 0.22, 1)
+            foreground_color: (0.83, 0.92, 1, 1)
+
+        BoxLayout:
+            size_hint_y: None
+            height: dp(50)
+            spacing: dp(8)
+            padding: dp(8)
+
+            Button:
+                text: '\u0421\u043E\u0445\u0440\u0430\u043D\u0438\u0442\u044C'
+                font_size: '14sp'
+                bold: True
+                background_color: (0, 0.8, 0.25, 1)
+                color: (1, 1, 1, 1)
+                size_hint_x: 0.4
+                on_release: root.save_settings()
+
+            Label:
+                id: status_label
+                text: ''
+                font_size: '11sp'
+                color: (0, 1, 0.25, 1)
+                size_hint_x: 0.6
+
+
+<RarityFilterChip>:
+    size_hint_x: 1
+    height: dp(26)
+
+    canvas.before:
+        Color:
+            rgba: root.chip_color if root.active else (0.05, 0.08, 0.12, 0.5)
+        RoundedRectangle:
+            pos: self.pos
+            size: self.size
+            radius: [6, 6, 6, 6]
+
+    Label:
+        text: root.label_text
+        font_size: '9sp'
+        bold: True
+        color: (1, 1, 1, 1) if root.active else (0.35, 0.48, 0.6, 1)
+        halign: 'center'
+        valign: 'middle'
+
+
+<MonitorResultRow>:
+    size_hint_y: None
+    height: dp(44)
+    spacing: dp(2)
+    padding: dp(2)
+
+    canvas.before:
+        Color:
+            rgba: self.row_color if self.row_color else (0.05, 0.08, 0.12, 1)
+        RoundedRectangle:
+            pos: self.pos
+            size: self.size
+            radius: [4, 4, 4, 4]
+
+    AsyncImage:
+        id: row_icon
+        size_hint_x: 0.1
+        source: root.icon_source if root.icon_source else ''
+        mipmap: True
+        size_hint_y: None
+        height: dp(32)
+
+    Label:
+        text: root.item_name
+        font_size: '9sp'
+        bold: True
+        size_hint_x: 0.25
+        color: (0.83, 0.92, 1, 1)
+        shorten: True
+
+    Label:
+        text: root.qlt_name
+        font_size: '8sp'
+        size_hint_x: 0.15
+        color: root.qlt_color if root.qlt_color else (0.83, 0.92, 1, 1)
+
+    Label:
+        text: root.ub_text
+        font_size: '8sp'
+        size_hint_x: 0.1
+        color: (0.83, 0.92, 1, 1)
+
+    Label:
+        text: root.min_price_text
+        font_size: '9sp'
+        bold: True
+        size_hint_x: 0.15
+        color: (0, 1, 0.25, 1)
+
+    Label:
+        text: root.discount_text
+        font_size: '9sp'
+        bold: True
+        size_hint_x: 0.1
+        color: root.discount_color if root.discount_color else (0, 1, 0.25, 1)
+
+    Button:
+        text: '\U0001f4ca'
+        font_size: '14sp'
+        size_hint_x: 0.15
+        background_color: (0.08, 0.13, 0.22, 1)
+        on_release: root.on_history()

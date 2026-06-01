@@ -1,0 +1,71 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+    inputs:
+      build_type:
+        description: 'Build type: debug or release'
+        required: true
+        default: 'release'
+        type: choice
+        options:
+          - debug
+          - release
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq \
+            python3-dev python3-pip \
+            build-essential git autoconf automake libtool \
+            pkg-config zlib1g-dev libncurses5-dev \
+            libncursesw5-dev libtinfo5 cmake libffi-dev \
+            libssl-dev libltdl-dev \
+            openjdk-17-jdk unzip
+
+      - name: Install buildozer
+        run: pip install --upgrade pip setuptools wheel cython buildozer
+
+      - name: Cache buildozer
+        uses: actions/cache@v4
+        with:
+          path: ~/.buildozer
+          key: ${{ runner.os }}-buildozer-${{ hashFiles('buildozer.spec') }}
+
+      - name: Decode keystore
+        if: inputs.build_type == 'release' || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+        run: |
+          echo "$KEYSTORE_BASE64" | base64 -d > stalcraft-release.keystore
+
+      - name: Build with buildozer
+        env:
+          KEYSTORE_PATH: ${{ github.workspace }}/stalcraft-release.keystore
+          KEYSTORE_ALIAS: ${{ secrets.KEYSTORE_ALIAS }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+          BUILD_TYPE="${{ inputs.build_type || 'release' }}"
+          buildozer android "$BUILD_TYPE"
+
+      - name: Upload APK/AAB
+        uses: actions/upload-artifact@v4
+        with:
+          name: stalcraft-monitor-${{ inputs.build_type || 'release' }}
+          path: bin/*

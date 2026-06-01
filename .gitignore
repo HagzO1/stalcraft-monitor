@@ -1,0 +1,7 @@
+*.keystore
+bin/
+data/
+*.log
+__pycache__/
+*.pyc
+.DS_Store
