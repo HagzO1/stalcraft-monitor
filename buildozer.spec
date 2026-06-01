@@ -5,7 +5,7 @@ package.domain = org.stalcraft.monitor
 source.dir = .
 source.include_exts = py,png,jpg,jpeg,gif,json,kv,ttf
 version = 1.0.0
-requirements = python3,kivy==2.3.1,kivy-garden.matplotlib,stalcraft-api>=2.1.0,aiogram>=3.0.0,Pillow>=10.0.0,aiofiles>=23.0.0,aiohttp==3.9.5,matplotlib>=3.5.0,numpy==1.26.4
+requirements = python3,kivy==2.3.1,kivy-garden.matplotlib,stalcraft-api>=2.1.0,aiogram>=3.0.0,Pillow>=10.0.0,aiofiles>=23.0.0,aiohttp==3.9.5,matplotlib>=3.5.0,numpy==1.24.3
 orientation = portrait
 osx.pocket_version = 2.0
 fullscreen = 0
