@@ -10,6 +10,7 @@ orientation = portrait
 osx.pocket_version = 2.0
 fullscreen = 0
 icon = icon.png
+android.api = 33
 android.minapi = 24
 
 [buildozer]
