@@ -13,8 +13,6 @@ icon = icon.png
 android.api = 33
 android.minapi = 24
 android.release_artifact = apk
-android.gradle_repositories = maven { url 'https://artifactory-external.vkpartner.ru/artifactory/rustore/' }
-android.gradle_dependencies = ru.rustore.sdk:ads:3.4.0
 
 [buildozer]
 log_level = 2

@@ -428,64 +428,6 @@ class MonitorScreen(Screen):
         if not app.monitor:
             return
 
-        try:
-            min_ptn = int(self.ids.min_ptn_input.text)
-        except ValueError:
-            min_ptn = 0
-        try:
-            min_profit = float(self.ids.profit_input.text)
-        except ValueError:
-            min_profit = 20.0
-        try:
-            days = int(self.ids.days_input.text)
-        except ValueError:
-            days = 14
-
-        self._monitoring = True
-        self.btn_text = "Остановить"
-        self.btn_color = get_color_from_hex("#ff0044")
-        self.ids.monitor_status_label.text = "Мониторинг запущен..."
-        self.ids.monitor_results.clear_widgets()
-
-        def on_result(item_id, per_qlt, icon_path):
-            item = app.state.get_item(item_id)
-            if not item:
-                return
-            Clock.schedule_once(
-                lambda dt: self._add_result(
-                    item_id, item["name"],
-                    icon_path, per_qlt, min_profit, days,
-                ), 0
-            )
-
-        tracked = get_tracked_ids()
-        logger.info(f"Запуск мониторинга: {len(tracked)} отслеживаемых, скидка {min_profit}%, дней {days}")
-        self.ids.monitor_status_label.text = f"Мониторинг: {len(tracked)} предметов, {min_profit}%..."
-
-        def clear_results():
-            Clock.schedule_once(lambda dt: self.ids.monitor_results.clear_widgets(), 0)
-
-        async def run():
-            try:
-                await app.monitor.monitor_loop(
-                    on_result, min_ptn=min_ptn, days=days,
-                    clear_results=clear_results,
-                )
-            except Exception as e:
-                logger.exception(f"Monitor error: {e}")
-
-        def thread_target():
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            loop.run_until_complete(run())
-            loop.close()
-            Clock.schedule_once(lambda dt: self._on_stopped(), 0)
-
-        threading.Thread(target=thread_target, daemon=True).start()
-
-    def _add_result(self, item_id, name, icon_path, per_qlt, min_profit=20.0, days=14):
-        if not is_tracked(item_id):
-            return
         app = get_app()
         filters = getattr(app.state, '_rarity_filters', None)
         active_keys = None
