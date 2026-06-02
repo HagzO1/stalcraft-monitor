@@ -12,6 +12,7 @@ fullscreen = 0
 icon = icon.png
 android.api = 33
 android.minapi = 24
+android.release_artifact = apk
 
 [buildozer]
 log_level = 2
@@ -30,7 +31,6 @@ android.allow_backup = True
 android.enable_androidx = True
 android.manifest_minsdk = 21
 android.manifest_targetsdk = 33
-android.release_artifact = apk
 android.gradle_repositories = maven { url 'https://artifactory-external.vkpartner.ru/artifactory/rustore/' }
 android.gradle_dependencies = ru.rustore.sdk:ads:3.4.0
 android.keystore = $(KEYSTORE_PATH)
