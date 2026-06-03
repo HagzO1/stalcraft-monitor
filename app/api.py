@@ -7,15 +7,13 @@ from statistics import mean
 import aiofiles
 import aiohttp
 
-from scapi import AppClient, DatabaseLookup
-from scapi.enums import SortAuction, Order
-from scapi.client import AuctionLot, AuctionPrice
-
 logger = logging.getLogger(__name__)
 
 _icon_cache_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "data", "icons")
 ICON_CACHE_DIR = _icon_cache_dir
 ICON_BASE_URL = "https://raw.githubusercontent.com/EXBO-Studio/stalcraft-database/main/ru"
+
+EAPI_BASE = "https://eapi.stalcraft.net"
 
 
 def set_icon_cache_dir(path: str):
@@ -33,23 +31,97 @@ QLT_NAMES = {
 }
 
 
+class AuctionLot:
+    def __init__(self, price: int, time: datetime, additional: dict | None = None, total: int = 1):
+        self.price = price
+        self.time = time
+        self.additional = additional or {}
+        self.total = total
+
+    @classmethod
+    def from_dict(cls, d: dict):
+        return cls(
+            price=d.get("price", 0),
+            time=datetime.fromisoformat(d["time"]) if "time" in d and d["time"] else datetime.now(timezone.utc),
+            additional=d.get("additional"),
+            total=d.get("total", 1),
+        )
+
+    def __repr__(self):
+        return f"AuctionLot(price={self.price}, time={self.time})"
+
+
+class AuctionPrice:
+    def __init__(self, price: int, time: datetime, additional: dict | None = None):
+        self.price = price
+        self.time = time
+        self.additional = additional or {}
+
+    @classmethod
+    def from_dict(cls, d: dict):
+        return cls(
+            price=d.get("price", 0),
+            time=datetime.fromisoformat(d["time"]) if "time" in d and d["time"] else datetime.now(timezone.utc),
+            additional=d.get("additional"),
+        )
+
+    def __repr__(self):
+        return f"AuctionPrice(price={self.price}, time={self.time})"
+
+
 class StalcraftAPI:
     def __init__(self, config):
         self.config = config
-        self.client: AppClient | None = None
-        self.db: DatabaseLookup | None = None
+        self._session: aiohttp.ClientSession | None = None
+        self._token: str | None = None
+        self._token_expires: datetime | None = None
+
+    async def _get_session(self) -> aiohttp.ClientSession:
+        if self._session is None or self._session.closed:
+            self._session = aiohttp.ClientSession(base_url=EAPI_BASE)
+        return self._session
+
+    async def _get_token(self) -> str:
+        if self._token and self._token_expires and datetime.now(timezone.utc) < self._token_expires:
+            return self._token
+        session = await self._get_session()
+        async with session.post(
+            "/oauth/token",
+            data={
+                "grant_type": "client_credentials",
+                "client_id": self.config.client_id,
+                "client_secret": self.config.client_secret,
+            },
+        ) as resp:
+            resp.raise_for_status()
+            data = await resp.json()
+            self._token = data["access_token"]
+            expires_in = data.get("expires_in", 3600)
+            self._token_expires = datetime.now(timezone.utc) + timedelta(seconds=expires_in - 60)
+            logger.debug("OAuth токен получен")
+            return self._token
+
+    async def _request(self, method: str, path: str, **kwargs) -> dict | list:
+        token = await self._get_token()
+        session = await self._get_session()
+        headers = {"Authorization": f"Bearer {token}"}
+        async with session.request(method, path, headers=headers, **kwargs) as resp:
+            resp.raise_for_status()
+            return await resp.json()
 
     async def init(self):
-        self.client = AppClient(
-            region=self.config.region,
-            client_id=self.config.client_id,
-            client_secret=self.config.client_secret,
-        )
-        self.db = DatabaseLookup(realm=self.config.region)
+        await self._get_session()
         logger.info("API инициализирован")
 
+    async def _fetch_listing(self) -> dict:
+        url = f"https://raw.githubusercontent.com/EXBO-Studio/stalcraft-database/main/{self.config.region}/listing.json"
+        session = await self._get_session()
+        async with session.get(url) as resp:
+            resp.raise_for_status()
+            return await resp.json()
+
     async def get_all_items(self) -> list[tuple[str, str, str, str, str, str]]:
-        entities = await self.db.get_all("listing.json")
+        entities = await self._fetch_listing()
         result = []
         for item_id, data in entities.items():
             path = data.get("data", "")
@@ -65,22 +137,25 @@ class StalcraftAPI:
         return result
 
     async def get_auction_lots(self, item_id: str, limit: int = 50) -> list[AuctionLot]:
-        endpoint = self.client.auction(item_id=item_id, region=self.config.region)
-        lots = await endpoint.lots(
-            limit=limit,
-            sort=SortAuction.BUYOUT_PRICE,
-            order=Order.ASCENDING,
-            additional=True,
+        data = await self._request(
+            "GET",
+            f"/auction/{self.config.region}/lots/{item_id}",
+            params={"limit": limit, "sort": "buyout_price", "order": "asc", "additional": "true"},
         )
-        return list(lots)
+        lots = data if isinstance(data, list) else data.get("lots", [])
+        return [AuctionLot.from_dict(l) for l in lots]
 
     async def get_price_history(self, item_id: str, limit: int = 200) -> list[AuctionPrice]:
-        endpoint = self.client.auction(item_id=item_id, region=self.config.region)
-        history = await endpoint.price_history(limit=limit, additional=True)
-        return list(history)
+        data = await self._request(
+            "GET",
+            f"/auction/{self.config.region}/history/{item_id}",
+            params={"limit": limit, "order": "asc", "additional": "true"},
+        )
+        prices = data if isinstance(data, list) else data.get("prices", [])
+        return [AuctionPrice.from_dict(p) for p in prices]
 
     async def get_price_history_week(self, item_id: str, days: int = 14, limit: int = 200) -> list[AuctionPrice]:
-        return list(await self.get_price_history(item_id, limit=limit))
+        return await self.get_price_history(item_id, limit=limit)
 
     async def get_price_history_week_grouped(self, item_id: str, days: int = 14) -> dict:
         prices = await self.get_price_history_week(item_id, days=days)
@@ -103,18 +178,15 @@ class StalcraftAPI:
         return result
 
     async def reinit(self):
-        self.client = AppClient(
-            region=self.config.region,
-            client_id=self.config.client_id,
-            client_secret=self.config.client_secret,
-        )
-        self.db = DatabaseLookup(realm=self.config.region)
+        self._token = None
+        self._token_expires = None
+        await self._get_session()
         logger.debug("API клиент пересоздан в новом event loop")
 
     async def reset_http_session(self):
-        if self.client and self.client._http._session:
-            await self.client._http._session.close()
-            self.client._http._session = None
+        if self._session and not self._session.closed:
+            await self._session.close()
+            self._session = None
             logger.debug("HTTP сессия сброшена")
 
     async def download_icon(self, icon_path: str, session: aiohttp.ClientSession | None = None) -> str | None:

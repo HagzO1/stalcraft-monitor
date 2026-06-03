@@ -60,8 +60,6 @@ jobs:
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
           AIOHTTP_NO_EXTENSIONS: 1
-          ANDROID_API_LEVEL: 24
-          ANDROID_NDK_API_LEVEL: 24
         run: |
           export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
           BUILD_TYPE="${{ inputs.build_type || 'release' }}"
