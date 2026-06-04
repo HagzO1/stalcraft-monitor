@@ -131,13 +131,22 @@ class StalcraftApp(App):
     async def _init_async(self):
         try:
             init_db()
+            Clock.schedule_once(lambda dt: setattr(self._status_bar, 'text', "Инициализация API..."))
             self.api = StalcraftAPI(self.app_config)
             await self.api.init()
             logger.info("Stalcraft API инициализирован")
+            await asyncio.sleep(1)
 
             self.monitor = PriceMonitor(self.api, self.app_config, self.state)
             self.monitor.start()
+
+            Clock.schedule_once(lambda dt: setattr(self._status_bar, 'text', "Загрузка каталога артефактов..."))
+            await asyncio.sleep(0.5)
             await self.monitor.load_catalog()
+
+            Clock.schedule_once(lambda dt: setattr(self._status_bar, 'text', "Загрузка иконок..."))
+            await asyncio.sleep(0.5)
+            await self.monitor.load_icons()
 
             self._catalog_loaded = True
             Clock.schedule_once(lambda dt: self._on_catalog_loaded(), 0)

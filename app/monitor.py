@@ -78,11 +78,14 @@ class PriceMonitor:
         logger.info(f"Загружено {len(all_items)} артефактов")
         self._all_items = all_items
         self.state.load_items(all_items)
+        return all_items
 
-        icon_map = await self.api.download_all_icons(all_items)
+    async def load_icons(self):
+        if not self._all_items:
+            return
+        icon_map = await self.api.download_all_icons(self._all_items)
         self.state.set_icon_map(icon_map)
         logger.info(f"Иконки загружены: {len(icon_map)}")
-        return all_items
 
     async def scan_single(self, item_id: str, min_ptn: int = 0, weekly_avg: dict | None = None) -> tuple[dict | None, list[tuple]]:
         try:

@@ -216,12 +216,16 @@ class StalcraftAPI:
             return None
 
     async def download_all_icons(self, items: list[tuple]) -> dict[str, str]:
-        async with aiohttp.ClientSession(connector=aiohttp.TCPConnector(limit=10, limit_per_host=5, ssl=False)) as session:
-            tasks = []
-            for item_id, _name, _c, _cat, _subcat, icon in items:
+        async with aiohttp.ClientSession(connector=aiohttp.TCPConnector(limit=3, limit_per_host=2, ssl=False)) as session:
+            results = []
+            for i, (item_id, _name, _c, _cat, _subcat, icon) in enumerate(items):
                 if icon:
-                    tasks.append(self.download_icon(icon, session))
-            results = await asyncio.gather(*tasks, return_exceptions=True)
+                    path = await self.download_icon(icon, session)
+                else:
+                    path = None
+                results.append(path)
+                if i % 10 == 9:
+                    await asyncio.sleep(0.3)
         icon_map = {}
         for (item_id, _name, _c, _cat, _subcat, icon), local_path in zip(items, results):
             if isinstance(local_path, str) and local_path:
