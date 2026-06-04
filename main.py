@@ -43,10 +43,6 @@ class StalcraftApp(App):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.app_config = Config.load()
-        data_dir = os.path.join(self.user_data_dir, "data")
-        os.makedirs(data_dir, exist_ok=True)
-        set_data_dir(data_dir)
-        init_db()
         self.state = SharedState()
         self.api: StalcraftAPI | None = None
         self.monitor: PriceMonitor | None = None
@@ -115,10 +111,12 @@ class StalcraftApp(App):
 
     def on_start(self):
         data_dir = os.path.join(self.user_data_dir, "data")
+        os.makedirs(data_dir, exist_ok=True)
         set_data_dir(data_dir)
         set_config_dir(data_dir)
         set_icon_cache_dir(os.path.join(data_dir, "icons"))
-        os.makedirs(data_dir, exist_ok=True)
+        set_config_dir(data_dir)
+        init_db()
         self._data_dir = data_dir
         threading.Thread(target=self._init_async_thread, daemon=True).start()
 
@@ -130,21 +128,24 @@ class StalcraftApp(App):
 
     async def _init_async(self):
         try:
-            init_db()
             Clock.schedule_once(lambda dt: setattr(self._status_bar, 'text', "Инициализация API..."))
+            logger.info("Старт инициализации API")
             self.api = StalcraftAPI(self.app_config)
             await self.api.init()
-            logger.info("Stalcraft API инициализирован")
+            logger.info("API инициализирован")
             await asyncio.sleep(1)
 
             self.monitor = PriceMonitor(self.api, self.app_config, self.state)
             self.monitor.start()
 
             Clock.schedule_once(lambda dt: setattr(self._status_bar, 'text', "Загрузка каталога артефактов..."))
+            logger.info("Загрузка каталога из listing.json")
             await asyncio.sleep(0.5)
             await self.monitor.load_catalog()
+            logger.info(f"Каталог загружен: {len(self.state.all_items_list)}")
 
             Clock.schedule_once(lambda dt: setattr(self._status_bar, 'text', "Загрузка иконок..."))
+            logger.info("Старт загрузки иконок")
             await asyncio.sleep(0.5)
             await self.monitor.load_icons()
 

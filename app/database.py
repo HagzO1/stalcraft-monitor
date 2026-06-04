@@ -206,12 +206,15 @@ def save_purchased(item_id: str, name: str, qlt: int, ub: int, min_buyout: int,
 
 def load_all_purchased() -> list[dict]:
     conn = get_conn()
-    rows = conn.execute(
-        """SELECT item_id, name, qlt, upgrade_bonus, min_buyout, hist_avg,
-                  discount_percent, speculation, icon_path, timestamp, purchased_at
-           FROM purchased_items ORDER BY purchased_at DESC"""
-    ).fetchall()
-    return [dict(r) for r in rows]
+    try:
+        rows = conn.execute(
+            """SELECT item_id, name, qlt, upgrade_bonus, min_buyout, hist_avg,
+                      discount_percent, speculation, icon_path, timestamp, purchased_at
+               FROM purchased_items ORDER BY purchased_at DESC"""
+        ).fetchall()
+        return [dict(r) for r in rows]
+    except sqlite3.OperationalError:
+        return []
 
 
 def remove_purchased(item_id: str, qlt: int, ub: int):
