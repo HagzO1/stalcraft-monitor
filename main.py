@@ -115,7 +115,6 @@ class StalcraftApp(App):
         set_data_dir(data_dir)
         set_config_dir(data_dir)
         set_icon_cache_dir(os.path.join(data_dir, "icons"))
-        set_config_dir(data_dir)
         init_db()
         self._data_dir = data_dir
         threading.Thread(target=self._init_async_thread, daemon=True).start()
