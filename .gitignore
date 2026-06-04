@@ -1,12 +1,7 @@
-apk/
-apk2/
-apk_out/
-build_log.txt
-bin/
 data/
 *.pyc
 __pycache__/
 *.keystore
 *.pem
 *.jar
-stalcraft-monitor-phone.apk
+build_log.txt
