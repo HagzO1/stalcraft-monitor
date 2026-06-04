@@ -229,7 +229,7 @@ class PriceMonitor:
         token = self.config.telegram_token
         chat_id = self.config.telegram_chat_id
         api_url = self.config.telegram_api_url
-        proxy = self.config.telegram_proxy
+        proxy = self.config.telegram_proxy if self.config.telegram_use_proxy else ""
         min_profit = self.config.min_profit_percent
         sent = 0
         for item_id in tracked_ids:

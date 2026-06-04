@@ -299,6 +299,42 @@
             background_color: (0.08, 0.13, 0.22, 1)
             foreground_color: (0.83, 0.92, 1, 1)
 
+        Label:
+            size_hint_y: None
+            height: dp(24)
+            text: '\u041F\u0440\u043E\u043A\u0441\u0438 URL:'
+            font_size: '11sp'
+            color: (0.83, 0.92, 1, 1)
+            halign: 'left'
+            valign: 'middle'
+
+        TextInput:
+            id: proxy_input
+            size_hint_y: None
+            height: dp(44)
+            font_size: '12sp'
+            multiline: False
+            background_color: (0.08, 0.13, 0.22, 1)
+            foreground_color: (0.83, 0.92, 1, 1)
+            cursor_color: (0, 0.9, 1, 1)
+            hint_text_color: (0.35, 0.48, 0.6, 1)
+            hint_text: 'socks5://user:pass@host:1080'
+            padding: dp(8), dp(4)
+
+        BoxLayout:
+            size_hint_y: None
+            height: dp(44)
+            spacing: dp(4)
+            Label:
+                text: '\u0418\u0441\u043F\u043E\u043B\u044C\u0437\u043E\u0432\u0430\u0442\u044C \u043F\u0440\u043E\u043A\u0441\u0438:'
+                font_size: '11sp'
+                color: (0.83, 0.92, 1, 1)
+                size_hint_x: 0.6
+            CheckBox:
+                id: proxy_check
+                size_hint_x: 0.2
+                color: (0, 0.9, 1, 1)
+
         BoxLayout:
             size_hint_y: None
             height: dp(50)

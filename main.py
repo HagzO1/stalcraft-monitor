@@ -129,17 +129,21 @@ class StalcraftApp(App):
         loop.close()
 
     async def _init_async(self):
-        init_db()
-        self.api = StalcraftAPI(self.app_config)
-        await self.api.init()
-        logger.info("Stalcraft API инициализирован")
+        try:
+            init_db()
+            self.api = StalcraftAPI(self.app_config)
+            await self.api.init()
+            logger.info("Stalcraft API инициализирован")
 
-        self.monitor = PriceMonitor(self.api, self.app_config, self.state)
-        self.monitor.start()
-        await self.monitor.load_catalog()
+            self.monitor = PriceMonitor(self.api, self.app_config, self.state)
+            self.monitor.start()
+            await self.monitor.load_catalog()
 
-        self._catalog_loaded = True
-        Clock.schedule_once(lambda dt: self._on_catalog_loaded(), 0)
+            self._catalog_loaded = True
+            Clock.schedule_once(lambda dt: self._on_catalog_loaded(), 0)
+        except Exception as e:
+            logger.exception(f"Ошибка инициализации: {e}")
+            Clock.schedule_once(lambda dt: setattr(self._status_bar, 'text', f"Ошибка: {e}"))
 
     def _on_catalog_loaded(self):
         catalog = self.sm.get_screen("catalog")

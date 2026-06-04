@@ -78,7 +78,8 @@ class StalcraftAPI:
 
     async def _get_session(self) -> aiohttp.ClientSession:
         if self._session is None or self._session.closed:
-            self._session = aiohttp.ClientSession(base_url=EAPI_BASE)
+            connector = aiohttp.TCPConnector(ssl=False)
+            self._session = aiohttp.ClientSession(base_url=EAPI_BASE, connector=connector)
         return self._session
 
     async def _get_token(self) -> str:
@@ -200,7 +201,8 @@ class StalcraftAPI:
 
         url = f"{ICON_BASE_URL}{icon_path}"
         try:
-            async with (session or aiohttp.ClientSession()).get(url) as resp:
+            ses = session or aiohttp.ClientSession(connector=aiohttp.TCPConnector(ssl=False))
+            async with ses.get(url) as resp:
                 if resp.status != 200:
                     logger.warning(f"Не удалось загрузить иконку: {url} -> {resp.status}")
                     return None
@@ -214,7 +216,7 @@ class StalcraftAPI:
             return None
 
     async def download_all_icons(self, items: list[tuple]) -> dict[str, str]:
-        async with aiohttp.ClientSession(connector=aiohttp.TCPConnector(limit=10, limit_per_host=5)) as session:
+        async with aiohttp.ClientSession(connector=aiohttp.TCPConnector(limit=10, limit_per_host=5, ssl=False)) as session:
             tasks = []
             for item_id, _name, _c, _cat, _subcat, icon in items:
                 if icon:

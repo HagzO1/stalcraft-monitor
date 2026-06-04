@@ -671,14 +671,20 @@ class SettingsScreen(Screen):
         app = get_app()
         self.ids.telegram_id_input.text = app.app_config.telegram_chat_id
         self.ids.server_spinner.text = app.app_config.region
+        self.ids.proxy_input.text = app.app_config.telegram_proxy
+        self.ids.proxy_check.active = app.app_config.telegram_use_proxy
         self.ids.status_label.text = ""
 
     def save_settings(self):
         app = get_app()
         tg_id = self.ids.telegram_id_input.text.strip()
         server = self.ids.server_spinner.text.strip()
+        proxy_url = self.ids.proxy_input.text.strip()
+        use_proxy = self.ids.proxy_check.active
         app.app_config.telegram_chat_id = tg_id
         app.app_config.region = server
+        app.app_config.telegram_proxy = proxy_url
+        app.app_config.telegram_use_proxy = use_proxy
         app.app_config.save()
         self.ids.status_label.text = "Сохранено!"
         Clock.schedule_once(lambda dt: self._clear_status(), 2)

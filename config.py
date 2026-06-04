@@ -17,9 +17,10 @@ class Config:
     client_id: str = "3024"
     client_secret: str = "QCqnxrgLdDBjqqmDAnInQMgReihLunwfjPbpAivY"
     telegram_token: str = "1513216317:AAGhLxG_aj9_AiJ-ZOXrt6iWG50_CkuSDRg"
-    telegram_chat_id: str = "1236356279"
+    telegram_chat_id: str = ""
     telegram_api_url: str = "https://api.telegram.org"
     telegram_proxy: str = ""
+    telegram_use_proxy: bool = False
     region: str = "ru"
     min_profit_percent: float = 20.0
     enabled: bool = False
