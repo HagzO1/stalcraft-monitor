@@ -425,34 +425,61 @@ class MonitorScreen(Screen):
 
     def _start(self):
         app = get_app()
-        if not app.monitor:
+        if not app.monitor or not app.state:
             return
 
-        app = get_app()
+        min_ptn = int(self.ids.min_ptn_input.text or "0")
+        min_profit = int(self.ids.profit_input.text or "20")
+        days = int(self.ids.days_input.text or "14")
+
+        self._monitoring = True
+        self.btn_text = "Остановить"
+        self.btn_color = get_color_from_hex("#cc0000")
+        self.ids.monitor_status_label.text = "Мониторинг запущен..."
+        grid = self.ids.monitor_results
+        grid.clear_widgets()
+
         filters = getattr(app.state, '_rarity_filters', None)
         active_keys = None
         if filters is not None:
             active_keys = {k for k, v in filters.items() if v}
-        profitable = {}
-        for k, v in per_qlt.items():
-            if v["discount_percent"] < min_profit:
-                continue
-            qlt_key = QLT_TO_KEY.get(v["qlt"], "DEFAULT")
-            if active_keys is not None and qlt_key not in active_keys:
-                continue
-            profitable[k] = v
-        logger.info(f"Результат: {name} ({len(profitable)} выгодных из {len(per_qlt)}, qlt-фильтр={len(profitable)})")
-        if not profitable:
-            return
+
+        def on_result(item_id, per_qlt, icon_path):
+            item = app.state.get_item(item_id)
+            if not item:
+                return
+            name = item["name"]
+            profitable = {}
+            for k, v in per_qlt.items():
+                if v["discount_percent"] < min_profit:
+                    continue
+                qlt_key = QLT_TO_KEY.get(v["qlt"], "DEFAULT")
+                if active_keys is not None and qlt_key not in active_keys:
+                    continue
+                profitable[k] = v
+            if not profitable:
+                return
+            Clock.schedule_once(lambda dt: self._add_result_row(
+                item_id, name, icon_path, profitable, days
+            ))
+
+        async def run():
+            try:
+                await app.monitor.monitor_loop(
+                    on_result, min_ptn=min_ptn, days=days,
+                    clear_results=lambda: Clock.schedule_once(lambda dt: grid.clear_widgets()),
+                )
+            except Exception as e:
+                logger.exception(f"Monitor error: {e}")
+            Clock.schedule_once(lambda dt: self._on_stopped())
+
+        threading.Thread(
+            target=lambda: asyncio.run(run()),
+            daemon=True,
+        ).start()
+
+    def _add_result_row(self, item_id, name, icon_path, profitable, days):
         grid = self.ids.monitor_results
-        to_remove = []
-        for child in grid.children:
-            if hasattr(child, 'item_id') and child.item_id == item_id:
-                to_remove.append(child)
-                if getattr(child, '_detail_box', None) and child._detail_box in grid.children:
-                    to_remove.append(child._detail_box)
-        for w in to_remove:
-            grid.remove_widget(w)
         for v in sorted(profitable.values(), key=lambda x: (x["qlt"], x["upgrade_bonus"])):
             qlt_color = get_color_from_hex(QLT_COLORS.get(v["qlt"], "#888888"))
             ub = v["upgrade_bonus"]
@@ -483,7 +510,7 @@ class MonitorScreen(Screen):
             row._detail_box = detail_box
 
             header = Label(
-                text=f"История за {days} дн: {QLT_NAMES.get(v['qlt'], '')} +{ub:.4g}" if ub else f"+0",
+                text=f"История за {days} дн: {QLT_NAMES.get(v['qlt'], '')} +{ub:.4g}" if ub else "+0",
                 size_hint_y=None, height=dp(18),
                 font_size="8sp", color=(0, 0.9, 1, 1),
                 halign="left", valign="middle",

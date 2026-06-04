@@ -46,27 +46,15 @@ jobs:
           path: ~/.buildozer
           key: ${{ runner.os }}-buildozer-${{ hashFiles('buildozer.spec') }}
 
-      - name: Decode keystore
-        if: inputs.build_type == 'release' || github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+      - name: Build with buildozer (debug)
         env:
-          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
-        run: |
-          echo "$KEYSTORE_BASE64" | base64 -d > stalcraft-release.keystore
-
-      - name: Build with buildozer
-        env:
-          KEYSTORE_PATH: ${{ github.workspace }}/stalcraft-release.keystore
-          KEYSTORE_ALIAS: ${{ secrets.KEYSTORE_ALIAS }}
-          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
-          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
           AIOHTTP_NO_EXTENSIONS: 1
         run: |
           export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
-          BUILD_TYPE="${{ inputs.build_type || 'release' }}"
-          yes | buildozer android "$BUILD_TYPE"
+          yes | buildozer android debug
 
-      - name: Upload APK/AAB
+      - name: Upload unsigned debug APK
         uses: actions/upload-artifact@v4
         with:
-          name: stalcraft-monitor-${{ inputs.build_type || 'release' }}
+          name: stalcraft-monitor-unsigned-debug
           path: bin/*

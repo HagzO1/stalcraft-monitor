@@ -43,6 +43,10 @@ class StalcraftApp(App):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.app_config = Config.load()
+        data_dir = os.path.join(self.user_data_dir, "data")
+        os.makedirs(data_dir, exist_ok=True)
+        set_data_dir(data_dir)
+        init_db()
         self.state = SharedState()
         self.api: StalcraftAPI | None = None
         self.monitor: PriceMonitor | None = None

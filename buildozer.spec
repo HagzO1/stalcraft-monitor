@@ -31,10 +31,11 @@ android.allow_backup = True
 android.enable_androidx = True
 android.manifest_minsdk = 21
 android.manifest_targetsdk = 33
-android.keystore = $(KEYSTORE_PATH)
-android.keystore_alias = $(KEYSTORE_ALIAS)
-android.keystore_password = $(KEYSTORE_PASSWORD)
-android.keyalias_password = $(KEY_PASSWORD)
+; keystore settings — uncomment and set env vars for release signing
+; android.keystore = $(KEYSTORE_PATH)
+; android.keystore_alias = $(KEYSTORE_ALIAS)
+; android.keystore_password = $(KEYSTORE_PASSWORD)
+; android.keyalias_password = $(KEY_PASSWORD)
 
 [app:ios]
 ios.codesign.debug =
